@@ -2,7 +2,7 @@
 
 import prisma from "../lib/db";
 import { revalidatePath } from "next/cache";
-import { flattenError, z } from "zod";
+import { z } from "zod";
 import { TaskStatus } from "./generated/prisma/enums";
 
 export type FormState = {

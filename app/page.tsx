@@ -1,5 +1,4 @@
 import prisma from "@/lib/db";
-import { addTask } from "./actions";
 import TaskItem from "./component/TaskItem";
 import AddTaskForm from "./component/AddTaskForm";
 
