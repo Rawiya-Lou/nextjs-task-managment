@@ -1,7 +1,7 @@
 import prisma from "@/lib/db";
 import TaskItem from "./component/TaskItem";
 import AddTaskForm from "./component/AddTaskForm";
-
+export const dynamic = 'force-dynamic'
 export async function getTasks() {
   return prisma.task.findMany({
     orderBy: { createdAt: "desc" },
