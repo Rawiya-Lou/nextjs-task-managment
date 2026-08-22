@@ -1,17 +1,16 @@
 // app/tests/actions.integration.test.ts
 // @vitest-environment node
-
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { resolve } from "path";
-import process  from "node:process";
+import process from "node:process";
 
-// 1. FIXED: Mock Next.js cache revalidation utility so it doesn't crash during integration runs
+// Mock Next.js cache revalidation utility so it doesn't crash during integration runs
 vi.mock("next/cache", () => ({
   revalidatePath: vi.fn(),
 }));
 
 try {
-  (process).loadEnvFile(resolve(process.cwd(), ".env.test"));
+  process.loadEnvFile(resolve(process.cwd(), ".env.test"));
 } catch (e) {
   console.warn("Could not find .env.test file natively.", e);
 }
@@ -20,7 +19,9 @@ try {
 vi.unmock("../../lib/db");
 vi.unmock("@/lib/db");
 
-import realPrismaInstance from "@/lib/db"; 
+import realPrismaInstance from "@/lib/db";
+import { TaskStatus } from "../generated/prisma/enums";
+import { toggleTask } from "../actions";
 
 describe("addTask: Integration test", () => {
   beforeEach(async () => {
@@ -48,6 +49,54 @@ describe("addTask: Integration test", () => {
 
     expect(savedTask).not.toBeNull();
     expect(savedTask?.title).toBe("Real Integration Task");
-    expect(savedTask?.completed).toBe(false); 
+    expect(savedTask?.completed).toBe(false);
   });
+});
+
+describe("toggleTask: Integration Test for updating the db", () => {
+  beforeEach(async () => {
+    await realPrismaInstance.task.deleteMany({});
+  });
+
+  it("should update a task status to Done in the live db", async () => {
+    const createTask = await realPrismaInstance.task.create({
+      data: {
+        title: "Integration Testing Task",
+        status: TaskStatus.IN_PROGRESS,
+        completed: false,
+      },
+    });
+
+    await toggleTask(createTask.id, true)
+
+    const updateTask = await realPrismaInstance.task.findUnique({
+        where: {id: createTask.id}
+    })
+    expect(updateTask).toBeDefined();
+    expect(updateTask?.completed).toBe(true);
+    expect(updateTask?.status).toBe(TaskStatus.DONE);
+
+  });
+
+  it("should revert a task status back to IN_PROGRESS when toggled to false", async() => {
+    const createTask = await realPrismaInstance.task.create({
+      data: {
+        title: "Integration Testing Task",
+        status: TaskStatus.DONE,
+        completed: true,
+      },
+    });
+
+
+    await toggleTask(createTask.id, false);
+
+    const updateTask = await realPrismaInstance.task.findUnique({
+        where: {id: createTask.id}
+    })
+
+    expect(updateTask).toBeDefined()
+    expect(updateTask?.completed).toBe(false)
+    expect(updateTask?.status).toBe(TaskStatus.IN_PROGRESS)
+  })
+
 });
