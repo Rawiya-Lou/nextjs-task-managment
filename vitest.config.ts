@@ -54,6 +54,13 @@ export default defineConfig({
           name: "unit",
           environment: "jsdom",
           include: ["app/**/*.test.{ts,tsx}"],
+          // FIX: Explicitly ignore integration files inside the unit project run
+          exclude: [
+            "**/node_modules/**",
+            "**/dist/**",
+            "**/.next/**",
+            "**/*.integration.test.ts"
+          ],
           setupFiles: ["./vitest.setup.ts"], // Mocks Prisma for unit runs
         },
       },
@@ -63,6 +70,11 @@ export default defineConfig({
           name: "integration",
           environment: "node", // Fast server-side backend environment
           include: ["app/tests/**/*.integration.test.ts"],
+          exclude: [
+            "**/node_modules/**",
+            "**/dist/**",
+            "**/.next/**"
+          ],
           // No setupFiles are used here, allowing Prisma to hit your real test DB
         },
       },
