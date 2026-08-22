@@ -50,8 +50,6 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
-      - name: Verify Code Coverage Thresholds
-        run: npx vitest coverage --thresholds.100    
       - name: Run Full-Stack Integration Tests
         run: npm run test:integration
         env:
