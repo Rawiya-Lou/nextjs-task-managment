@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import { describe, vi, beforeEach, it, expect } from "vitest";
 import userEvent from '@testing-library/user-event'
 import { addTask } from "../actions";
@@ -21,6 +21,7 @@ describe("AddTask component", () => {
     expect(screen.getByPlaceholderText(/Add new Task/i));
     expect(screen.getByRole("button", { name: /add/i })).toBeInTheDocument();
   });
+
   it("handels laoding state (isPending) during form submissing", async() => {
     const user = userEvent.setup();
     // this get the exact return type of the server action function
@@ -52,4 +53,47 @@ describe("AddTask component", () => {
 
   
   });
+
+  it('display error message when the server action return an error state', async () => {
+
+    const user = userEvent.setup()
+
+    // Mock the server action response
+
+
+    vi.mocked(addTask).mockResolvedValue({
+        error: 'Task title cannot be empty or too short'
+    });
+
+    render(<AddTaskForm />);
+
+    const input = screen.getByPlaceholderText(/Add new Task/i);
+
+    const button = screen.getByRole('button', {name: /add/i})
+
+    // interacting with the ui 
+
+   await user.type(input, 'Hi');
+
+    await user.click(button)
+    // Wait for the error message to flash on screen
+
+    await waitFor(() => {
+        expect(screen.getByText('Task title cannot be empty or too short')).toBeInTheDocument()
+
+    })
+
+    // Extract and assert the FormData fields
+
+
+    expect(addTask).toHaveBeenCalledOnce();
+    // useActionState passes two arguments to the action: (prevState, formData)
+const mockCalls = vi.mocked(addTask).mock.calls[0]
+const submittedFormData = mockCalls[1] as FormData
+
+    // Validate the actual content inside the FormData payload
+expect(submittedFormData).toBeInstanceOf(FormData)
+expect(submittedFormData.get('title')).toBe('Hi')
+
+  })
 });

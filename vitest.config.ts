@@ -4,13 +4,68 @@ import { resolve } from "path";
 
 export default defineConfig({
   plugins: [react()],
-  test: {
-    environment: "jsdom",
-    setupFiles: ["./vitest.setup.ts"],
-    globals: true,
-
+  resolve: {
     alias: {
-      "@": resolve(__dirname, "./tests"), // Matches your Next.js path aliases
+      "@": resolve(__dirname, "./"), // Shared across all sub-projects
     },
+  },
+  test: {
+    // 1. GLOBAL BASE SETTINGS (Root Level)
+    globals: true,
+    fileParallelism: false,
+    isolate: true,
+    onConsoleLog: () => {
+      if (typeof window !== "undefined" && global.Event !== window.Event) {
+        global.Event = window.Event;
+      }
+    },
+
+    // 2. FIXED: Move coverage completely out of the sub-project to this root level
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "text-summary", "html", "json"],
+      thresholds: {
+        lines: 80,
+        branches: 80,
+        functions: 80,
+        statements: 80,
+      },
+      include: ["app/**/*.{ts,tsx}", "lib/**/*.{ts,tsx}"],
+      exclude: [
+        "node_modules/**",
+        ".next/**",
+        "coverage/**",
+        "vitest.config.**",
+        "vitest.setup.**",
+        "app/layout.tsx",
+        "app/tests/**", // Prevents integration test files from lowering unit metrics
+        "lib/db.ts",
+        "lib/__mocks__/**",
+        "**/*.d.ts",
+      ],
+      skipFull: true,
+    },
+
+    // 3. REGULAR PROJECT ISOLATION DEFINITIONS
+    projects: [
+      {
+        extends: true, // Inherits root aliases and root coverage settings safely
+        test: {
+          name: "unit",
+          environment: "jsdom",
+          include: ["app/**/*.test.{ts,tsx}"],
+          setupFiles: ["./vitest.setup.ts"], // Mocks Prisma for unit runs
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: "integration",
+          environment: "node", // Fast server-side backend environment
+          include: ["app/tests/**/*.integration.test.ts"],
+          // No setupFiles are used here, allowing Prisma to hit your real test DB
+        },
+      },
+    ],
   },
 });

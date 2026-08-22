@@ -11,9 +11,18 @@ export default function AddTaskForm() {
               type="text"
               name="title"
               disabled={isPending}
-              placeholder="Add new Task... "
+              placeholder="Add new Task..."
               className="border rounded px-4 py-2 outline-none focus:ring focus:ring-blue-500 bg-white"
-              required
+          
+            />
+           
+            <input
+              type="text"
+              name="description"
+              disabled={isPending}
+              placeholder="Add a description..."
+              className="border rounded px-4 py-2 outline-none focus:ring focus:ring-blue-500 bg-white"
+           
             />
             <button
               type="submit"
@@ -25,6 +34,9 @@ export default function AddTaskForm() {
           </div>
             {state?.error && (
         <p className="text-sm text-red-500 font-medium mt-1">{state.error}</p>
+      )}
+            {state?.success && (
+        <p className="text-sm text-green-500 font-medium mt-1">{state.success}</p>
       )}
         </form>
   )
