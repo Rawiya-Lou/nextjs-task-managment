@@ -22,7 +22,7 @@ vi.unmock("@/lib/db");
 import realPrismaInstance from "@/lib/db";
 import { TaskStatus } from "../generated/prisma/enums";
 import { toggleTask } from "../actions";
-import { getTasks } from "../page";
+import { getTasks } from "../queries/getTasks"; 
 
 describe("addTask: Integration test", () => {
   beforeEach(async () => {
