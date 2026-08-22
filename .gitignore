@@ -41,7 +41,19 @@ yarn-error.log*
 next-env.d.ts
 
 /app/generated/prisma
+#  cache folders
+*.windsurf/
 
 # Ignore temporary integration test sqlite database files
 test.db
 test.db-journal
+
+# AI Agent Caches & Workspace Logs
+.claude/
+.agents/
+claude_*.log
+agent_*.log
+
+# Local System and Tool Configurations
+.config/
+*.local.config.*

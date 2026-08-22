@@ -1,12 +1,11 @@
 // @vitest-environment node
 import { dbMock } from "../../lib/__mocks__/db";
-import { addTask } from "../actions";
-import {act} from '@testing-library/react'
+import { addTask, toggleTask } from "../actions";
+import { act } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { revalidatePath } from "next/cache";
 
 import { TaskStatus } from "../generated/prisma/enums";
-
 
 // Mock Next.js cache revalidation utility so it doesn't crash outside of a server environment
 
@@ -14,7 +13,7 @@ vi.mock("next/cache", () => ({
   revalidatePath: vi.fn(),
 }));
 
-describe("server actions suite", () => {
+describe("addTask: Unit test Suite", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -129,5 +128,64 @@ describe("server actions suite", () => {
     });
 
     consoleSpy.mockRestore();
+  });
+});
+
+describe("toggleTask: Unit test Suite", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("should invoke prisma.task.update with Done status when completed", async () => {
+    const taskId = "task-completed-123";
+
+    dbMock.task.update.mockResolvedValue({
+      id: taskId,
+      title: "Mock Task",
+      description: null,
+      status: TaskStatus.DONE,
+      completed: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    await toggleTask(taskId, true);
+
+    expect(dbMock.task.update).toHaveBeenCalledTimes(1);
+    expect(dbMock.task.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+            where: {id: taskId},
+            data: {
+          completed: true,
+          status: TaskStatus.DONE,
+        },
+        })
+    )
+  });
+  it("should invoke prisma.task.update with In_progress status when not completed", async () => {
+    const taskId = "task-completed-321";
+
+    dbMock.task.update.mockResolvedValue({
+      id: taskId,
+      title: "Mock Task",
+      description: null,
+      status: TaskStatus.IN_PROGRESS,
+      completed: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    await toggleTask(taskId, false);
+
+    expect(dbMock.task.update).toHaveBeenCalledTimes(1);
+    expect(dbMock.task.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+            where: {id: taskId},
+            data: {
+          completed: false,
+          status: TaskStatus.IN_PROGRESS,
+        },
+        })
+    )
   });
 });

@@ -9,10 +9,10 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run --exclude **/*.integration.test.ts",
-    "test:watch": "vitest",
+    "test": "vitest run --project=unit",
+    "test:watch": "vitest --project=unit",
     "test:integration": "env-cmd -f .env.test bash -c \"npx prisma generate && npx prisma db push && npx vitest run --project=integration\"",
-    "test:coverage": "vitest run --project=unit"
+    "test:coverage": "vitest run --project=unit --coverage"
   },
   "dependencies": {
     "@prisma/adapter-neon": "^7.9.1",

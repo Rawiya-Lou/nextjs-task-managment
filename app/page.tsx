@@ -1,15 +1,10 @@
-import prisma from "@/lib/db";
-import TaskItem from "./component/TaskItem";
 import AddTaskForm from "./component/AddTaskForm";
-export const dynamic = 'force-dynamic'
-export async function getTasks() {
-  return prisma.task.findMany({
-    orderBy: { createdAt: "desc" },
-  });
-}
+import { Suspense } from "react";
+import TaskList from "./component/TaskList";
+import TaskListSkeleton from "./component/skeleton/TaskListSkeleton";
+export const dynamic = "force-dynamic";
 
-export default async function Home() {
-  const tasks = await getTasks();
+export default function Home() {
   return (
     <main className="flex justify-center align-top py-10">
       <div className="flex justify-top align-center flex-col mx-auto border-blue-500 border h-125 px-16 py-8 rounded bg-blue-500/5">
@@ -17,18 +12,11 @@ export default async function Home() {
           Task Managment App
         </h1>
         <AddTaskForm />
-      
-        <ul>
-          {tasks.map((t) => (
-            <li key={t.id}>
-              <TaskItem task={{
-                ...t,
-                createdAt: t.createdAt.toISOString(),
-                updatedAt: t.updatedAt.toISOString(),
-              }} />
-            </li>
-          ))}
-        </ul>
+
+        {/* Suspense handles asynchronous streaming seamlessly */}
+        <Suspense fallback={<TaskListSkeleton />}>
+          <TaskList />
+        </Suspense>
       </div>
     </main>
   );

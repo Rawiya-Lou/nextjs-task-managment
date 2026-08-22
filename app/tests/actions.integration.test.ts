@@ -22,6 +22,7 @@ vi.unmock("@/lib/db");
 import realPrismaInstance from "@/lib/db";
 import { TaskStatus } from "../generated/prisma/enums";
 import { toggleTask } from "../actions";
+import { getTasks } from "../page";
 
 describe("addTask: Integration test", () => {
   beforeEach(async () => {
@@ -67,18 +68,17 @@ describe("toggleTask: Integration Test for updating the db", () => {
       },
     });
 
-    await toggleTask(createTask.id, true)
+    await toggleTask(createTask.id, true);
 
     const updateTask = await realPrismaInstance.task.findUnique({
-        where: {id: createTask.id}
-    })
+      where: { id: createTask.id },
+    });
     expect(updateTask).toBeDefined();
     expect(updateTask?.completed).toBe(true);
     expect(updateTask?.status).toBe(TaskStatus.DONE);
-
   });
 
-  it("should revert a task status back to IN_PROGRESS when toggled to false", async() => {
+  it("should revert a task status back to IN_PROGRESS when toggled to false", async () => {
     const createTask = await realPrismaInstance.task.create({
       data: {
         title: "Integration Testing Task",
@@ -87,16 +87,43 @@ describe("toggleTask: Integration Test for updating the db", () => {
       },
     });
 
-
     await toggleTask(createTask.id, false);
 
     const updateTask = await realPrismaInstance.task.findUnique({
-        where: {id: createTask.id}
+      where: { id: createTask.id },
+    });
+
+    expect(updateTask).toBeDefined();
+    expect(updateTask?.completed).toBe(false);
+    expect(updateTask?.status).toBe(TaskStatus.IN_PROGRESS);
+  });
+});
+
+describe("getTasks: Integration test to get the tasks from db", () => {
+  beforeEach(async () => {
+    await realPrismaInstance.task.deleteMany();
+  });
+
+  it("should connect to Neon to retrieve row sorted by descending order", async () => {
+    const oldTask = await realPrismaInstance.task.create({
+      data: {
+        title: "Older Task entry",
+        createdAt: new Date("2026-05-10T10:00:00Z"),
+      },
+    });
+
+    const newTask = await realPrismaInstance.task.create({
+        data: {
+        title: 'Newer Task entry',
+        createdAt: new Date('2026-05-10T12:00:00Z'), // 2 hours newer
+      },
     })
 
-    expect(updateTask).toBeDefined()
-    expect(updateTask?.completed).toBe(false)
-    expect(updateTask?.status).toBe(TaskStatus.IN_PROGRESS)
-  })
+    const tasks = await getTasks();
 
+    expect(tasks.length).toBe(2);
+    expect(tasks[0].id).toBe(newTask.id)
+    expect(tasks[1].id).toBe(oldTask.id)
+    expect(tasks[0].title).toBe('Newer Task entry')
+  });
 });
